@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Document</title>
+    <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+        font-size: 0;
+    }
+    </style>
+</head>
+
+<body>
+    <canvas id="cvs" width="800" height="800"></canvas>
+    <script type="text/javascript" src="src/hidpi-canvas.min.js"></script>
+    <script type="text/javascript" src="src/cRender.js"></script>
+    <script>
+    var getPixelRatio = function(context) {
+        var backingStore = context.backingStorePixelRatio ||
+            context.webkitBackingStorePixelRatio ||
+            context.mozBackingStorePixelRatio ||
+            context.msBackingStorePixelRatio ||
+            context.oBackingStorePixelRatio ||
+            context.backingStorePixelRatio || 1;
+
+        return (window.devicePixelRatio || 1) / backingStore;
+    };
+
+    window.onload = function() {
+        var cr = cRender('cvs');
+        var ratio = getPixelRatio(cr.context);
+
+        cr.addShape({
+            shape: 'line',
+            style: {
+                x: 50,
+                y: 50,
+                points: [{
+                    x: 0,
+                    y: 0
+                }, {
+                    x: 30,
+                    y: 30
+                }],
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'polygon',
+            style: {
+                x: 150,
+                y: 50,
+                side: 6,
+                radius: 40,
+                stroke: '#f60',
+                shadowColor: 'red',
+                shadowBlur: 5,
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'polygon',
+            style: {
+                x: 250,
+                y: 50,
+                side: 8,
+                radius: 40,
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'polygon',
+            style: {
+                x: 350,
+                y: 50,
+                side: 5,
+                radius: 40,
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'arrow',
+            style: {
+                x: 450,
+                y: 50,
+                width: 5,
+                height: 50,
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'star',
+            style: {
+                x: 750,
+                y: 50,
+                side: 6,
+                radius: 50,
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'star',
+            style: {
+                x: 550,
+                y: 50,
+                side: 5,
+                shadowColor: 'green',
+                shadowBlur: 5,
+                shadowOffsetY: 5,
+                shadowOffsetX: 5,
+                radius: 50,
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'star',
+            style: {
+                x: 650,
+                y: 50,
+                side: 4,
+                radius: 50,
+                stroke: '#f60',
+                lineWidth: 0.5
+            }
+        })
+
+        cr.addShape({
+            shape: 'circel',
+            style: {
+                x: 50,
+                y: 150,
+                radius: 20,
+                stroke: '#f60',
+                lineWidth: 0.5
+            },
+            zIndex: 1
+        });
+
+        cr.addShape({
+            shape: 'sector',
+            style: {
+                x: 150,
+                y: 150,
+                radius: 30,
+                sAngle: 0,
+                eAngle: 80,
+                stroke: '#f60',
+                lineWidth: .5
+            }
+        });
+
+        cr.addShape({
+            shape: 'sector',
+            style: {
+                x: 250,
+                y: 150,
+                radius: 30,
+                sAngle: 0,
+                eAngle: 80,
+                fill: '#f60'
+            }
+        });
+
+        cr.addShape({
+            shape: 'rect',
+            style: {
+                x: 350,
+                y: 150,
+                width: 50,
+                height: 50,
+                stroke: '#f60'
+            }
+        });
+
+        cr.addShape({
+            shape: 'rectRadius',
+            style: {
+                x: 450,
+                y: 150,
+                width: 50,
+                height: 50,
+                radius: 10,
+                stroke: '#f60'
+            }
+        });
+
+        cr.addShape({
+            shape: 'oval',
+            style: {
+                x: 550,
+                y: 150,
+                width: 50,
+                height: 30,
+                stroke: '#f60'
+            }
+        });
+
+        cr.addShape({
+            shape: 'oval',
+            style: {
+                x: 650,
+                y: 150,
+                height: 50,
+                width: 10,
+                stroke: '#f60'
+            }
+        });
+
+        cr.addShape({
+            shape: 'text',
+            name: 'bbb',
+            style: {
+                x: 750,
+                y: 150,
+                text: '国国国\n国国国\n国国国',
+                textAlign: 'center',
+                textBaseline: 'middle',
+                font: '18px Arial',
+                fill: '#f60'
+            }
+        });
+
+        var img = new Image();
+        img.onload = function() {
+            var that = this;
+            var c = cr.addShape({
+                shape: 'bbb',
+                style: {
+                    x: 50,
+                    y: 250,
+                    draw: function() {
+                        var w = 100 * ratio;
+                        var h = 100 * ratio;
+                        this.context.drawImage(that, -w / 2, -h / 2, w, h);
+                    }
+                }
+            });
+        }
+        img.src = 'http://www.33lc.com/article/UploadPic/2012-8/201282413335761587.jpg';
+
+        document.addEventListener('click', function(e) {
+            cr.mouseX = e.clientX;
+            cr.mouseY = e.clientY;
+            console.log(cr.mouseX, cr.mouseY)
+        }, false)
+    }
+    </script>
+</body>
+
+</html>

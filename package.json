@@ -1,0 +1,23 @@
+{
+  "name": "crender",
+  "version": "1.0.0",
+  "description": "a simple canvas tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jxchenvip/cRender.git"
+  },
+  "keywords": [
+    "cRender",
+    "canvas"
+  ],
+  "author": "jxchen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jxchenvip/cRender/issues"
+  },
+  "homepage": "https://github.com/jxchenvip/cRender#readme"
+}
