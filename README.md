@@ -1,2 +1,2 @@
 # cRender
-a canvas simple tool
+a simple canvas tool
