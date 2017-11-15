@@ -14,8 +14,10 @@
         this.cx = this.width / 2;
         this.cy = this.height / 2;
 
-        this.mouseX = -1;
-        this.mouseY = -1;
+        this.resetMouse(); // reset mouse
+
+        this.__lastMouseX = -1; // 上一次鼠标x坐标
+        this.__lastMouseY = -1; // 上一次鼠标y坐标
 
         this.updateFrame = false;
         this.childrens = [];
@@ -26,15 +28,30 @@
     }
 
     cRender.init.prototype = cRender.prototype = {
-        constructor: 'cRender',
+        constructor: cRender,
+        newShapeName: function() {
+            return Date.now();
+        },
+        resetMouse: function() {
+            this.mouseX = -1;
+            this.mouseY = -1;
+        },
         update: function() {
             this.updateFrame = true;
         },
+        /**
+         * [sortChildrens 图形排序]
+         * @return {[type]} [description]
+         */
         sortChildrens: function() {
             this.childrens.sort(function(a, b) {
                 return a.zIndex - b.zIndex;
             })
         },
+        /**
+         * [render 渲染]
+         * @return {[type]} [description]
+         */
         render: function() {
             if (this.updateFrame) {
                 this.updateFrame = false;
@@ -42,18 +59,31 @@
             this.draw();
             window.requestAnimationFrame(this.render.bind(this));
         },
+        /**
+         * [draw 画图]
+         * @return {[type]} [description]
+         */
         draw: function() {
             this.context.clearRect(0, 0, this.width, this.height)
             this.childrens.forEach(function(item) {
-                item.rotate++;
+                // item.rotate++;
                 item.init();
             }.bind(this));
         },
+        /**
+         * [addChildren 添加图形]
+         * @param {[type]} child [description]
+         */
         addChildren: function(child) {
             this.childrens.push(child);
             this.sortChildrens();
             return this;
         },
+        /**
+         * [findChildren 查找图形]
+         * @param  {[String]} name [图形名称]
+         * @return {[Object]}      [图形对象]
+         */
         findChildren: function(name) {
             var res = {};
             this.childrens.forEach(function(item, index) {
@@ -64,22 +94,42 @@
             })
             return res;
         },
+        /**
+         * [getChildren 获取图层]
+         * @param  {[String]} name [图层名称]
+         * @return {[Object]}      [Layer]
+         */
         getChildren: function(name) {
             return this.findChildren(name).child;
         },
+        /**
+         * [removeChildren 移除图层]
+         * @param  {[String]} name [图层名称]
+         * @return {[type]}      [description]
+         */
         removeChildren: function(name) {
             var index = this.findChildren(name).index;
             this.childrens.splice(index, 1);
         },
+        /**
+         * [d2a 角度转弧度]
+         * @param  {[Number]} n [角度]
+         * @return {[Number]}   [弧度]
+         */
         d2a: function(n) {
             return n * Math.PI / 180;
         },
+        /**
+         * [addShape 添加图形]
+         * @param {[Object]} style [配置]
+         */
         addShape: function(options) {
             if (typeof options.shape != 'string') return '';
             var fnName = '__draw' + options.shape.charAt(0).toUpperCase() + options.shape.substring(1);
             var name = options.name || 'Layer_' + this.childrens.length;
             var style = options.style || {};
             var layer = new Layer(this.context, name, style.x, style.y);
+            layer.setParams(options); // 绑定配置
             layer.draw = function(parent) {
                 this.context.beginPath();
                 this.context.lineWidth = style.lineWidth;
@@ -92,12 +142,16 @@
                 this.context.shadowBlur = style.shadowBlur;
                 this.context.shadowOffsetX = style.shadowOffsetX;
                 this.context.shadowOffsetY = style.shadowOffsetY;
-                typeof this[fnName] == 'function' && this[fnName](options.style);
+                typeof this[fnName] == 'function' && this[fnName](style);
                 if (!this[fnName] && typeof style.draw == 'function') {
                     style.draw.call(this, layer);
                 }
                 if (this.context.isPointInPath(this.mouseX, this.mouseY)) {
-                    console.log('a')
+                    this.resetMouse();
+                    console.log(layer)
+                }
+                if (this.context.isPointInStroke(this.mouseX, this.mouseY)) {
+                    this.resetMouse();
                 }
                 this.context.closePath();
                 style.fill && this.context.fill();
@@ -108,39 +162,80 @@
             this.update();
             return layer;
         },
+        /**
+         * [__drawLine 线条]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawLine: function(style) {
+            // this.context.setLineDash([10, 20]);
             style.points.forEach(function(item) {
                 this.context.lineTo(item.x, item.y);
             }.bind(this))
         },
+        /**
+         * [__drawPolygon 多边形]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawPolygon: function(style) {
             var polygon = new Polygon(style.side, style.radius, style.angle);
             style.points = polygon.points;
             this.__drawLine(style);
             polygon = null;
         },
+        /**
+         * [__drawStar 星形]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawStar: function(style) {
             var star = new Star(style.side, style.radius, style.angle);
             style.points = star.points;
             this.__drawLine(style);
             star = null;
         },
+        /**
+         * [__drawArrow 箭头]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawArrow: function(style) {
             var arrow = new Arrow(style.width, style.height);
             style.points = arrow.points;
             this.__drawLine(style);
             arrow = null;
         },
+        /**
+         * [__drawCircel 圆形]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawCircel: function(style) {
             this.context.arc(0, 0, style.radius, this.d2a(0), this.d2a(360), style.counterclockwise);
         },
+        /**
+         * [__drawSector 扇形]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawSector: function(style) {
             this.context.moveTo(0, 0);
             this.context.arc(0, 0, style.radius, this.d2a(style.sAngle), this.d2a(style.eAngle));
         },
+        /**
+         * [__drawRect 矩形]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawRect: function(style) {
             this.context.rect(-style.width / 2, -style.height / 2, style.width, style.height);
         },
+        /**
+         * [__drawRectRadius 圆角矩形]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawRectRadius: function(style) {
             var width = style.width;
             var height = style.height;
@@ -160,6 +255,11 @@
             this.context.lineTo(x + left, y + height);
             this.context.quadraticCurveTo(x, y + height, x, y + height - left);
         },
+        /**
+         * [__drawOval 渲染椭圆]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawOval: function(style) {
             var width = style.width;
             var height = style.height;
@@ -171,6 +271,22 @@
             this.context.quadraticCurveTo(x + width, y + height, 0, y + height);
             this.context.quadraticCurveTo(x, y + height, x, 0);
         },
+        __drawEllipse: function(style) {
+            var width = style.width;
+            var height = style.height;
+            var x = -width / 2;
+            var y = -height / 2;
+            this.context.moveTo(x, 0);
+            this.context.quadraticCurveTo(x, y, 0, y);
+            this.context.quadraticCurveTo(x + width, y, x + width, 0);
+            this.context.quadraticCurveTo(x + width, y + height, 0, y + height);
+            this.context.quadraticCurveTo(x, y + height, x, 0);
+        },
+        /**
+         * [__drawText 渲染文本]
+         * @param  {[Object]} style [配置]
+         * @return {[type]}       [description]
+         */
         __drawText: function(style) {
             this.context.font = style.font;
             this.context.textAlign = style.textAlign;
@@ -178,14 +294,26 @@
             var texts = style.text.split('\n');
             var fontSize = this.context.font.match(/\d+/)[0];
             var lines = Math.floor(texts.length / 2);
+            var t = {};
             texts.forEach(function(item, index) {
-                style.fill && this.context.fillText(item, 0, (index - lines) * fontSize);
-                style.stroke && this.context.strokeText(item, 0, (index - lines) * fontSize);
-            }.bind(this))
+                var x = 0;
+                var y = (index - lines) * fontSize;
+                style.fill && this.context.fillText(item, x, y);
+                style.stroke && this.context.strokeText(item, x, y);
+                var w = this.context.measureText(item).width;
+                this.context.strokeStyle = '#f60';
+                // this.context.rect(-w / 2, y - fontSize / 2, w, fontSize);
+            }.bind(this));
+            // this.context.fillStyle = 'transparent';
+            // this.context.strokeStyle = 'transparent';
         }
     }
 
-
+    /**
+     * [Arrow 箭头]
+     * @param {[Number]} width  [宽]
+     * @param {[Number]} height [高]
+     */
     function Arrow(width, height) {
         this.width = width || 0;
         this.height = height || 0;
@@ -194,7 +322,7 @@
     }
 
     Arrow.prototype = {
-        constructor: 'Arrow',
+        constructor: Arrow,
         init: function() {
             var point1 = { x: this.width, y: 0 };
             var point2 = { x: 0, y: this.height };
@@ -203,6 +331,12 @@
         }
     }
 
+    /**
+     * [Star 星形]
+     * @param {[Number]} side   [边]
+     * @param {[Number]} radius [半径]
+     * @param {[Number]} angle  [旋转角度]
+     */
     function Star(side, radius, angle) {
         this.side = side || 0;
         this.radius = radius || 0;
@@ -212,7 +346,7 @@
     }
 
     Star.prototype = {
-        constructor: 'Star',
+        constructor: Star,
         init: function() {
             for (var i = this.side * 2; i--;) {
                 var angle = (180 / this.side * i + this.angle) * Math.PI / 180;
@@ -224,6 +358,12 @@
         }
     }
 
+    /**
+     * [Polygon 多边形]
+     * @param {[Number]} side   [边]
+     * @param {[Number]} radius [半径]
+     * @param {[Number]} angle  [旋转角度]
+     */
     function Polygon(side, radius, angle) {
         this.side = side || 0;
         this.radius = radius || 0;
@@ -232,7 +372,7 @@
         this.init();
     }
     Polygon.prototype = {
-        constructor: 'Polygon',
+        constructor: Polygon,
         init: function() {
             for (var i = this.side; i--;) {
                 var angle = (360 / this.side * i + this.angle) * Math.PI / 180;
@@ -243,6 +383,13 @@
         }
     }
 
+    /**
+     * [Layer 图层]
+     * @param {[Object]} context [context]
+     * @param {[String]} name    [名称]
+     * @param {[Number]} x       [x坐标]
+     * @param {[Number]} y       [y坐标]
+     */
     function Layer(context, name, x, y) {
         this.x = x;
         this.y = y;
@@ -253,11 +400,16 @@
         this.draw = function() {};
         this.context = context;
         this.zIndex = 0;
+        this.params = {};
+        this.click = false;
         this.init();
     }
 
     Layer.prototype = {
-        constructor: 'Layer',
+        constructor: Layer,
+        setParams: function(options) {
+            this.params = options;
+        },
         setZIndex: function(n) {
             this.zIndex = n;
             return this;
